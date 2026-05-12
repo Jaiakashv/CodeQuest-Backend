@@ -12,17 +12,22 @@ const updateProgress = async (req, res) => {
       progress = await UserProgress.create({ userId });
     }
 
+    let isNew = false;
+
     if (lessonId && !progress.completedLessons.includes(lessonId)) {
       progress.completedLessons.push(lessonId);
+      isNew = true;
     }
     if (quizId && !progress.completedQuizzes.includes(quizId)) {
       progress.completedQuizzes.push(quizId);
+      isNew = true;
     }
     if (challengeId && !progress.completedChallenges.includes(challengeId)) {
       progress.completedChallenges.push(challengeId);
+      isNew = true;
     }
 
-    if (xpEarned) {
+    if (isNew && xpEarned) {
       progress.xp += xpEarned;
     }
 
