@@ -6,7 +6,7 @@ const Level = require('../models/Level');
 const Lesson = require('../models/Lesson');
 const Challenge = require('../models/Challenge');
 
-const seedAdvancedJS = async () => {
+const seedFullCurriculum = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to DB...');
@@ -17,18 +17,17 @@ const seedAdvancedJS = async () => {
       process.exit(1);
     }
 
-    // Clean up existing levels and lessons for JS topic to avoid duplicates
+    // Delete all existing data for JS topic
     const levels = await Level.find({ topicId: jsTopic._id });
     const levelIds = levels.map(l => l._id);
     await Lesson.deleteMany({ levelId: { $in: levelIds } });
     await Challenge.deleteMany({ topicId: jsTopic._id });
     await Level.deleteMany({ topicId: jsTopic._id });
 
-    console.log('Cleaned up existing JS content...');
+    console.log('CLEARED ALL PREVIOUS DATA. Starting fresh seed...');
 
-    // Helper function to create Lesson + Challenge
-    const createLessonWithChallenge = async (data, challengeData) => {
-      const lesson = await Lesson.create(data);
+    const createLesson = async (lessonData, challengeData) => {
+      const lesson = await Lesson.create(lessonData);
       if (challengeData) {
         const challenge = await Challenge.create({
           ...challengeData,
@@ -41,446 +40,653 @@ const seedAdvancedJS = async () => {
       return lesson;
     };
 
-    // --- LEVEL 1: THE BEGINNING (Re-seeding basic ones with details) ---
-    const level1 = await Level.create({
-      topicId: jsTopic._id,
-      title: 'The Beginning',
-      type: 'Basics',
-      order: 1
-    });
+    // --- LEVEL 1: THE BASICS ---
+    const lv1 = await Level.create({ topicId: jsTopic._id, title: 'The Basics', type: 'Basics', order: 1 });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level1._id,
-      title: 'Variables & Constants',
+      levelId: lv1._id,
+      title: 'Variables (var, let, const)',
       slug: 'js-variables',
-      description: 'Storage for your data.',
       explanation: `
-### Definition
-Variables are containers for storing data values.
+### 1. Definition
+Variables are containers for storing data values. In modern JS, we use let and const instead of var.
 
-### Syntax
+### 2. Syntax
 \`\`\`javascript
-let name = "John"; // Reassignable
-const age = 30;    // Constant (cannot be changed)
-var old = true;    // Legacy way (avoid)
+const pi = 3.14;
+let score = 0;
 \`\`\`
 
-### Real Example
-Think of a variable as a box with a label. You can put things in it and change them later (let) or lock the box forever (const).
-      `,
+### 3. Real Example
+Storing a fixed user ID versus a changing score in a game.
+`,
       order: 1,
       difficulty: 'Beginner',
-      estimatedTime: '10 mins',
-      quiz: [
-        {
-          question: 'Which keyword prevents reassignment?',
-          options: ['let', 'var', 'const', 'set'],
-          correctAnswer: 'const'
-        }
-      ]
+      quiz: [{ question: 'Which keyword is used for constant values?', options: ['let', 'var', 'const'], correctAnswer: 'const' }]
     }, {
-      title: 'Constant Challenge',
-      instructions: 'Declare a constant named VERSION and set it to 1.2. Log it.',
-      starterCode: '// Your code here\n',
-      expectedOutput: '1.2',
-      difficulty: 'Beginner'
+      title: 'Variable Challenge',
+      instructions: 'Create a constant named NAME and set it to "Akash". Log it.',
+      starterCode: '// Write your code here\n',
+      expectedOutput: 'Akash'
     });
 
-    // --- LEVEL 2: OPERATORS & CONTROL FLOW ---
-    const level2 = await Level.create({
+    await createLesson({
       topicId: jsTopic._id,
-      title: 'Logic & Control Flow',
-      type: 'Logic',
-      order: 2
-    });
-
-    await createLessonWithChallenge({
-      topicId: jsTopic._id,
-      levelId: level2._id,
-      title: 'Operators',
-      slug: 'js-operators',
-      description: 'Arithmetic and comparison logic.',
+      levelId: lv1._id,
+      title: 'Data Types',
+      slug: 'js-data-types',
       explanation: `
-### Definition
-Operators perform operations on variables and values.
+### 1. Definition
+Data types describe the different kinds of data that we can use in JavaScript like strings, numbers, and booleans.
 
-### Syntax
-- Arithmetic: \`+, -, *, /, %, **\`
-- Comparison: \`==, ===, !=, !==, >, <, >=, <=\`
-- Logical: \`&& (AND), || (OR), ! (NOT)\`
-
-### Real Example
-Checking if a user is old enough to enter:
+### 2. Syntax
 \`\`\`javascript
-const age = 18;
-const isAdult = age >= 18; // Returns true
-\`\`\`
-      `,
-      order: 1,
-      difficulty: 'Beginner',
-      estimatedTime: '15 mins',
-      quiz: [
-        {
-          question: 'What does === check that == does not?',
-          options: ['Value', 'Type', 'Both', 'Nothing'],
-          correctAnswer: 'Type'
-        }
-      ]
-    }, {
-      title: 'Modulo Challenge',
-      instructions: 'Find the remainder of 10 divided by 3 using the modulo operator and log it.',
-      starterCode: 'const result = \nconsole.log(result);',
-      expectedOutput: '1',
-      difficulty: 'Beginner'
-    });
-
-    await createLessonWithChallenge({
-      topicId: jsTopic._id,
-      levelId: level2._id,
-      title: 'Conditionals',
-      slug: 'js-conditionals',
-      description: 'Making decisions with code.',
-      explanation: `
-### Definition
-Conditionals execute code blocks based on whether a condition is true or false.
-
-### Syntax
-\`\`\`javascript
-if (condition) {
-  // code if true
-} else if (anotherCondition) {
-  // code
-} else {
-  // default code
-}
+let str = "Hello";
+let num = 42;
+let bool = true;
 \`\`\`
 
-### Real Example
-Greeting based on time of day:
-\`\`\`javascript
-if (hour < 12) {
-  greeting = "Good morning";
-} else {
-  greeting = "Good day";
-}
-\`\`\`
-      `,
+### 3. Real Example
+Representing a product name, its price, and its availability status.
+`,
       order: 2,
       difficulty: 'Beginner',
-      estimatedTime: '20 mins',
-      quiz: [{ question: 'Which statement handles multiple cases?', options: ['if', 'else', 'switch'], correctAnswer: 'switch' }]
+      quiz: [{ question: 'What type is the value 50?', options: ['string', 'number', 'boolean'], correctAnswer: 'number' }]
     }, {
-      title: 'Positive Check',
-      instructions: 'Write an if statement that logs "Positive" if num is greater than 0.',
-      starterCode: 'const num = 5;\nif (num > 0) {\n  // log here\n}',
-      expectedOutput: 'Positive',
-      difficulty: 'Beginner'
+      title: 'Type Challenge',
+      instructions: 'Log the type of the value true using the typeof operator.',
+      starterCode: '// Write your code here\n',
+      expectedOutput: 'boolean'
     });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level2._id,
+      levelId: lv1._id,
+      title: 'Operators',
+      slug: 'js-operators',
+      explanation: `
+### 1. Definition
+Operators are used to perform operations on variables and values.
+
+### 2. Syntax
+\`\`\`javascript
+let result = 10 + 5;
+let check = (10 === 10);
+\`\`\`
+
+### 3. Real Example
+Calculating discounts or checking if two passwords match.
+`,
+      order: 3,
+      difficulty: 'Beginner',
+      quiz: [{ question: 'Which operator checks for both value and type?', options: ['==', '===', '='], correctAnswer: '===' }]
+    }, {
+      title: 'Operator Challenge',
+      instructions: 'Multiply 6 by 7 and log the result.',
+      starterCode: '// Write your code here\n',
+      expectedOutput: '42'
+    });
+
+    // --- LEVEL 2: CONTROL FLOW ---
+    const lv2 = await Level.create({ topicId: jsTopic._id, title: 'Control Flow', type: 'Logic', order: 2 });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv2._id,
+      title: 'Condition Statements',
+      slug: 'js-conditionals',
+      explanation: `
+### 1. Definition
+Conditional statements are used to perform different actions based on different conditions.
+
+### 2. Syntax
+\`\`\`javascript
+if (age >= 18) {
+  console.log("Adult");
+}
+\`\`\`
+
+### 3. Real Example
+Showing a login button if the user is logged out, or a logout button if they are logged in.
+`,
+      order: 1,
+      difficulty: 'Beginner',
+      quiz: [{ question: 'Which keyword handles the default case if no conditions are met?', options: ['if', 'else', 'switch'], correctAnswer: 'else' }]
+    }, {
+      title: 'Conditional Challenge',
+      instructions: 'If 20 > 10, log "Larger".',
+      starterCode: '// Write your code here\n',
+      expectedOutput: 'Larger'
+    });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv2._id,
       title: 'Loops',
       slug: 'js-loops',
-      description: 'Repeat tasks efficiently.',
       explanation: `
-### Definition
-Loops repeat a block of code while a condition is met.
+### 1. Definition
+Loops are used to run the same code over and over again, each time with a different value.
 
-### Syntax
+### 2. Syntax
 \`\`\`javascript
-for (let i = 0; i < 5; i++) {
+for (let i = 0; i < 3; i++) {
   console.log(i);
 }
 \`\`\`
 
-### Real Example
-Printing a list of products in a shopping cart.
-      `,
-      order: 3,
+### 3. Real Example
+Iterating through a list of images to display them on a webpage.
+`,
+      order: 2,
       difficulty: 'Beginner',
-      estimatedTime: '20 mins'
+      quiz: [{ question: 'Which loop is best when you know the number of iterations?', options: ['for', 'while', 'do-while'], correctAnswer: 'for' }]
     }, {
-      title: 'Simple Loop',
-      instructions: 'Use a for loop to log the numbers 1 and 2.',
-      starterCode: 'for (let i = 1; i <= 2; i++) {\n  console.log(i);\n}',
-      expectedOutput: '1\n2',
-      difficulty: 'Beginner'
+      title: 'Loop Challenge',
+      instructions: 'Use a loop to log "Loop" exactly 2 times.',
+      starterCode: '// Write your code here\n',
+      expectedOutput: 'Loop\nLoop'
     });
 
     // --- LEVEL 3: FUNCTIONS ---
-    const level3 = await Level.create({
-      topicId: jsTopic._id,
-      title: 'Functions & Modern Syntax',
-      type: 'Functions',
-      order: 3
-    });
+    const lv3 = await Level.create({ topicId: jsTopic._id, title: 'Modern Functions', type: 'Functions', order: 3 });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level3._id,
+      levelId: lv3._id,
       title: 'Functions',
-      slug: 'js-functions',
-      description: 'Reusable code blocks.',
+      slug: 'js-functions-basics',
       explanation: `
-### Definition
+### 1. Definition
 A function is a block of code designed to perform a particular task.
 
-### Syntax
+### 2. Syntax
 \`\`\`javascript
-function greet(name) {
-  return "Hello " + name;
+function add(a, b) {
+  return a + b;
 }
 \`\`\`
 
-### Real Example
-A calculator function that adds two numbers.
-      `,
+### 3. Real Example
+A function that calculates the tax on an item price.
+`,
       order: 1,
       difficulty: 'Beginner',
-      estimatedTime: '20 mins'
+      quiz: [{ question: 'Which keyword is used to send a value back from a function?', options: ['send', 'return', 'give'], correctAnswer: 'return' }]
     }, {
-      title: 'Square Function',
-      instructions: 'Define a function named square that takes x and returns x * x.',
-      starterCode: 'function square(x) {\n  // return here\n}\nconsole.log(square(4));',
-      expectedOutput: '16',
-      difficulty: 'Beginner'
+      title: 'Function Challenge',
+      instructions: 'Create a function named getX that returns 10. Log getX().',
+      starterCode: '// Write your code here\n',
+      expectedOutput: '10'
     });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level3._id,
+      levelId: lv3._id,
       title: 'Arrow Functions',
       slug: 'js-arrow-functions',
-      description: 'Clean, modern function syntax.',
       explanation: `
-### Definition
-Arrow functions provide a shorter syntax for writing functions.
+### 1. Definition
+Arrow functions provide a shorter syntax for writing function expressions.
 
-### Syntax
+### 2. Syntax
 \`\`\`javascript
-const greet = (name) => \`Hello \${name}\`;
+const greet = () => "Hello";
 \`\`\`
 
-### Real Example
-Commonly used in array methods like map or filter.
-      `,
+### 3. Real Example
+Writing short, one-line functions for events or data processing.
+`,
       order: 2,
       difficulty: 'Beginner',
-      estimatedTime: '15 mins'
+      quiz: [{ question: 'Arrow functions are introduced in which version?', options: ['ES5', 'ES6', 'ES2020'], correctAnswer: 'ES6' }]
+    }, {
+      title: 'Arrow Challenge',
+      instructions: 'Create an arrow function named double that takes n and returns n*2. Log double(5).',
+      starterCode: '// Write your code here\n',
+      expectedOutput: '10'
     });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level3._id,
+      levelId: lv3._id,
       title: 'Template Literals',
       slug: 'js-template-literals',
-      description: 'Better string interpolation.',
       explanation: `
-### Definition
-Template literals use backticks (\` \`) and allow embedded expressions.
+### 1. Definition
+Template literals allow embedded expressions and multi-line strings using backticks.
 
-### Syntax
+### 2. Syntax
 \`\`\`javascript
-const str = \`Sum: \${5 + 5}\`;
+console.log(\`Hi \${name}\`);
 \`\`\`
 
-### Real Example
-Dynamic HTML generation or complex messages.
-      `,
+### 3. Real Example
+Generating a personalized dynamic message for a user profile.
+`,
       order: 3,
       difficulty: 'Beginner',
-      estimatedTime: '10 mins'
+      quiz: [{ question: 'Which character is used for template literals?', options: ["'", '"', '`'], correctAnswer: '`' }]
+    }, {
+      title: 'Template Challenge',
+      instructions: 'Log "Val: 100" using a variable x = 100 and template literals.',
+      starterCode: '// Write your code here\n',
+      expectedOutput: 'Val: 100'
     });
 
-    // --- LEVEL 4: IMPORTANT CONCEPTS ---
-    const level4 = await Level.create({
-      topicId: jsTopic._id,
-      title: 'Deep Dive: Core Concepts',
-      type: 'Concepts',
-      order: 4
-    });
+    // --- LEVEL 4: INTERVIEW CONCEPTS ---
+    const lv4 = await Level.create({ topicId: jsTopic._id, title: 'Interview Essentials', type: 'Advanced', order: 4 });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level4._id,
-      title: 'Scope',
+      levelId: lv4._id,
+      title: 'Scope (Global, Block, Function)',
       slug: 'js-scope',
-      description: 'Visibility of variables.',
       explanation: `
-### Definition
-Scope determines where variables are accessible.
-- **Global**: Accessible everywhere.
-- **Function**: Accessible only inside the function.
-- **Block**: (let/const) Accessible only inside {}.
+### 1. Definition
+Scope determines the accessibility of variables. JS has Global, Function, and Block scope.
 
-### Syntax
+### 2. Syntax
 \`\`\`javascript
 {
-  let x = 10; // Block scoped
+  let x = 1; // Block scope
 }
-// console.log(x); // Error
 \`\`\`
-      `,
+
+### 3. Real Example
+Preventing variable name collisions between different parts of a large application.
+`,
       order: 1,
-      difficulty: 'Intermediate'
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'Which keyword has block scope?', options: ['var', 'let', 'global'], correctAnswer: 'let' }]
     });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level4._id,
+      levelId: lv4._id,
       title: 'Closures',
       slug: 'js-closures',
-      description: 'Functions remembering their origin.',
       explanation: `
-### Definition
-A closure is a function that remembers its lexical scope even when executed outside that scope.
+### 1. Definition
+A closure is a function that remembers its outer variables even after the outer function has returned.
 
-### Syntax
+### 2. Syntax
 \`\`\`javascript
-function outer() {
-  const msg = "Hi";
-  return () => console.log(msg);
+function init() {
+  let name = "JS";
+  return () => name;
 }
 \`\`\`
-      `,
+
+### 3. Real Example
+Creating data privacy where variables cannot be accessed from outside a specific function.
+`,
       order: 2,
-      difficulty: 'Intermediate'
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'Does a closure remember its lexical environment?', options: ['Yes', 'No'], correctAnswer: 'Yes' }]
     });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level4._id,
-      title: 'The "this" Keyword',
-      slug: 'js-this',
-      description: 'Execution context explained.',
+      levelId: lv4._id,
+      title: 'Hoisting',
+      slug: 'js-hoisting',
       explanation: `
-### Definition
-The 'this' keyword refers to the object currently executing the code.
-- In a method: refers to the owner object.
-- Alone: refers to the Global object.
-      `,
+### 1. Definition
+Hoisting is the behavior of moving declarations to the top of the current scope.
+
+### 2. Syntax
+\`\`\`javascript
+console.log(x); // undefined
+var x = 5;
+\`\`\`
+
+### 3. Real Example
+Understanding why functions can be called before they are declared in the code.
+`,
       order: 3,
-      difficulty: 'Intermediate'
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'Are let and const hoisted?', options: ['No (Temporal Dead Zone)', 'Yes', 'Only const'], correctAnswer: 'No (Temporal Dead Zone)' }]
     });
 
-    // --- LEVEL 5: ASYNC JS ---
-    const level5 = await Level.create({
+    await createLesson({
       topicId: jsTopic._id,
-      title: 'Asynchronous Programming',
-      type: 'Async',
-      order: 5
+      levelId: lv4._id,
+      title: 'this keyword',
+      slug: 'js-this',
+      explanation: `
+### 1. Definition
+The 'this' keyword refers to the object it belongs to, depending on how a function is called.
+
+### 2. Syntax
+\`\`\`javascript
+const obj = {
+  run() { console.log(this); }
+};
+\`\`\`
+
+### 3. Real Example
+In an event listener, 'this' refers to the element that received the event.
+`,
+      order: 4,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'In a regular function, what does this refer to?', options: ['Global object', 'The function', 'Nothing'], correctAnswer: 'Global object' }]
     });
 
-    await createLessonWithChallenge({
+    // --- LEVEL 5: ASYNC ---
+    const lv5 = await Level.create({ topicId: jsTopic._id, title: 'Asynchronous JS', type: 'Async', order: 5 });
+
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level5._id,
+      levelId: lv5._id,
+      title: 'Callback functions',
+      slug: 'js-callbacks',
+      explanation: `
+### 1. Definition
+A callback is a function passed as an argument to another function.
+
+### 2. Syntax
+\`\`\`javascript
+function doWork(callback) {
+  callback();
+}
+\`\`\`
+
+### 3. Real Example
+Running a piece of code only after a user clicks a button.
+`,
+      order: 1,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'Is a callback executed immediately or later?', options: ['Immediately', 'Later (When called)', 'Never'], correctAnswer: 'Later (When called)' }]
+    });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv5._id,
       title: 'Promises',
       slug: 'js-promises',
-      description: 'Handling future results.',
       explanation: `
-### Definition
-An object representing the eventual completion of an async task.
+### 1. Definition
+A Promise represents the eventual completion or failure of an asynchronous operation.
 
-### Syntax
+### 2. Syntax
 \`\`\`javascript
-const myPromise = new Promise((resolve, reject) => { ... });
-myPromise.then(res => ...).catch(err => ...);
+const p = new Promise((res) => res("Success"));
 \`\`\`
-      `,
-      order: 1,
-      difficulty: 'Intermediate'
+
+### 3. Real Example
+Waiting for data from a server before displaying it to the user.
+`,
+      order: 2,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'What are the 3 states of a Promise?', options: ['Start, Stop, End', 'Pending, Fulfilled, Rejected', 'Wait, Go, Finish'], correctAnswer: 'Pending, Fulfilled, Rejected' }]
     });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level5._id,
+      levelId: lv5._id,
       title: 'Async / Await',
       slug: 'js-async-await',
-      description: 'Syntactic sugar for Promises.',
       explanation: `
-### Definition
-Async/Await allows you to write async code that looks synchronous.
+### 1. Definition
+Async/Await is syntactic sugar for promises, making async code look synchronous.
 
-### Syntax
+### 2. Syntax
 \`\`\`javascript
 async function getData() {
   const res = await fetch(url);
 }
 \`\`\`
-      `,
-      order: 2,
-      difficulty: 'Intermediate'
+
+### 3. Real Example
+Cleaning up complex nested promise chains into readable steps.
+`,
+      order: 3,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'What does the await keyword do?', options: ['Stops execution', 'Waits for promise to resolve', 'Skips the line'], correctAnswer: 'Waits for promise to resolve' }]
     });
 
     // --- LEVEL 6: ARRAY METHODS ---
-    const level6 = await Level.create({
-      topicId: jsTopic._id,
-      title: 'Array Power Methods',
-      type: 'Arrays',
-      order: 6
-    });
+    const lv6 = await Level.create({ topicId: jsTopic._id, title: 'Master the Array', type: 'Arrays', order: 6 });
 
-    await createLessonWithChallenge({
+    await createLesson({
       topicId: jsTopic._id,
-      levelId: level6._id,
-      title: 'map() filter() reduce()',
-      slug: 'js-array-methods',
-      description: 'Powerful data manipulation.',
+      levelId: lv6._id,
+      title: 'map()',
+      slug: 'js-map',
       explanation: `
-### map()
-Creates a new array by transforming every element.
+### 1. Definition
+Map creates a new array by performing a function on each array element.
+
+### 2. Syntax
 \`\`\`javascript
-[1, 2].map(x => x * 2); // [2, 4]
+[1, 2].map(x => x * 2);
 \`\`\`
 
-### filter()
-Filters elements based on a condition.
-\`\`\`javascript
-[1, 2].filter(x => x > 1); // [2]
-\`\`\`
-      `,
+### 3. Real Example
+Converting a list of prices into a list of formatted price strings.
+`,
       order: 1,
-      difficulty: 'Intermediate'
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'Does map() change the original array?', options: ['Yes', 'No'], correctAnswer: 'No' }]
     }, {
       title: 'Map Challenge',
-      instructions: 'Use .map() to double the numbers [1, 2, 3] and log the resulting array.',
-      starterCode: 'const nums = [1, 2, 3];\nconst result = nums.map(n => n * 2);\nconsole.log(result);',
-      expectedOutput: '[2,4,6]',
-      difficulty: 'Intermediate'
+      instructions: 'Use map to triple [1, 2] and log result.',
+      starterCode: '// Write your code here\n',
+      expectedOutput: '[3,6]'
     });
 
-    // --- LEVEL 7: ES6 FEATURES ---
-    const level7 = await Level.create({
+    await createLesson({
       topicId: jsTopic._id,
-      title: 'ES6 Features',
-      type: 'Modern',
-      order: 7
-    });
-
-    await createLessonWithChallenge({
-      topicId: jsTopic._id,
-      levelId: level7._id,
-      title: 'Destructuring & Spread',
-      slug: 'js-es6-plus',
-      description: 'Clean data unpacking.',
+      levelId: lv6._id,
+      title: 'filter()',
+      slug: 'js-filter',
       explanation: `
-### Destructuring
+### 1. Definition
+Filter creates a new array with elements that pass a specific test.
+
+### 2. Syntax
 \`\`\`javascript
-const { name, age } = user;
+[1, 10].filter(x => x > 5);
 \`\`\`
 
-### Spread (...)
-\`\`\`javascript
-const newArr = [...oldArr, 4];
-\`\`\`
-      `,
-      order: 1,
-      difficulty: 'Intermediate'
+### 3. Real Example
+Filtering a product list to show only items currently in stock.
+`,
+      order: 2,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'What does filter() return if no items pass?', options: ['null', 'undefined', '[] (Empty array)'], correctAnswer: '[] (Empty array)' }]
+    }, {
+      title: 'Filter Challenge',
+      instructions: 'Filter [5, 15, 25] to only keep numbers > 20 and log it.',
+      starterCode: '// Write your code here\n',
+      expectedOutput: '[25]'
     });
 
-    console.log('Complete JS Curriculum Seeded Successfully!');
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv6._id,
+      title: 'reduce()',
+      slug: 'js-reduce',
+      explanation: `
+### 1. Definition
+Reduce runs a function on each array element to produce a single value.
+
+### 2. Syntax
+\`\`\`javascript
+[1, 2].reduce((sum, n) => sum + n, 0);
+\`\`\`
+
+### 3. Real Example
+Calculating the total price of all items in a shopping cart.
+`,
+      order: 3,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'What is the first argument of the reduce callback?', options: ['index', 'accumulator', 'currentValue'], correctAnswer: 'accumulator' }]
+    });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv6._id,
+      title: 'forEach()',
+      slug: 'js-foreach',
+      explanation: `
+### 1. Definition
+ForEach calls a function once for each element in an array.
+
+### 2. Syntax
+\`\`\`javascript
+[1, 2].forEach(x => console.log(x));
+\`\`\`
+
+### 3. Real Example
+Sending an individual analytic event for every item a user viewed.
+`,
+      order: 4,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'Does forEach() return a new array?', options: ['Yes', 'No'], correctAnswer: 'No' }]
+    });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv6._id,
+      title: 'find()',
+      slug: 'js-find',
+      explanation: `
+### 1. Definition
+Find returns the first element in an array that passes a test.
+
+### 2. Syntax
+\`\`\`javascript
+[1, 5, 10].find(x => x > 4);
+\`\`\`
+
+### 3. Real Example
+Finding a specific user object in an array based on their ID.
+`,
+      order: 5,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'How many items does find() return?', options: ['All matches', 'The first match only', 'An array'], correctAnswer: 'The first match only' }]
+    });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv6._id,
+      title: 'some() & every()',
+      slug: 'js-some-every',
+      explanation: `
+### 1. Definition
+Some checks if any element passes a test. Every checks if all elements pass.
+
+### 2. Syntax
+\`\`\`javascript
+[1, 2].some(x => x > 1);
+[1, 2].every(x => x > 0);
+\`\`\`
+
+### 3. Real Example
+Checking if 'every' user has accepted terms or 'some' items are fragile.
+`,
+      order: 6,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'What is the return type of some()?', options: ['Array', 'Boolean', 'Number'], correctAnswer: 'Boolean' }]
+    });
+
+    // --- LEVEL 7: ES6+ ---
+    const lv7 = await Level.create({ topicId: jsTopic._id, title: 'ES6+ Power', type: 'Modern', order: 7 });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv7._id,
+      title: 'Destructuring',
+      slug: 'js-destructuring',
+      explanation: `
+### 1. Definition
+Unpacking values from arrays or properties from objects into variables.
+
+### 2. Syntax
+\`\`\`javascript
+const { name } = user;
+\`\`\`
+
+### 3. Real Example
+Extracting specific settings from a large configuration object.
+`,
+      order: 1,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'Can you destructure arrays?', options: ['Yes', 'No'], correctAnswer: 'Yes' }]
+    });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv7._id,
+      title: 'Spread & Rest operator',
+      slug: 'js-spread-rest',
+      explanation: `
+### 1. Definition
+Spread (...) expands elements. Rest (...) collects them into an array.
+
+### 2. Syntax
+\`\`\`javascript
+const newArr = [...old];
+function sum(...args) { ... }
+\`\`\`
+
+### 3. Real Example
+Copying an array without changing the original or accepting infinite function arguments.
+`,
+      order: 2,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'What symbol represents both spread and rest?', options: ['...', '***', '&&&'], correctAnswer: '...' }]
+    });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv7._id,
+      title: 'Modules (import/export)',
+      slug: 'js-modules',
+      explanation: `
+### 1. Definition
+Modules allow splitting code into separate files to keep projects organized.
+
+### 2. Syntax
+\`\`\`javascript
+export const x = 1;
+import { x } from './file.js';
+\`\`\`
+
+### 3. Real Example
+Keeping utility functions in one file and components in another.
+`,
+      order: 3,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'Which keyword shares code with other files?', options: ['share', 'export', 'give'], correctAnswer: 'export' }]
+    });
+
+    await createLesson({
+      topicId: jsTopic._id,
+      levelId: lv7._id,
+      title: 'Default parameters',
+      slug: 'js-default-params',
+      explanation: `
+### 1. Definition
+Allow named parameters to be initialized with default values if no value is passed.
+
+### 2. Syntax
+\`\`\`javascript
+function greet(name = "Guest") { ... }
+\`\`\`
+
+### 3. Real Example
+Providing a fallback value for a user preference if they haven't set one yet.
+`,
+      order: 4,
+      difficulty: 'Intermediate',
+      quiz: [{ question: 'When is the default parameter used?', options: ['Always', 'Only if the value is undefined', 'Never'], correctAnswer: 'Only if the value is undefined' }]
+    });
+
+    console.log('CONGRATULATIONS! ALL 25+ TOPICS SEEDED SUCCESSFULLY! 🚀');
     process.exit(0);
   } catch (err) {
     console.error(err);
@@ -488,4 +694,4 @@ const newArr = [...oldArr, 4];
   }
 };
 
-seedAdvancedJS();
+seedFullCurriculum();
