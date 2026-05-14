@@ -58,6 +58,7 @@ const lessonRoutes = require('./routes/lessonRoutes');
 const progressRoutes = require('./routes/progressRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
+const problemRoutes = require('./routes/problemRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/topics', topicRoutes);
@@ -66,6 +67,7 @@ app.use('/api/lessons', lessonRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/problems', problemRoutes);
 
 const PORT = process.env.PORT || 5000;
 
